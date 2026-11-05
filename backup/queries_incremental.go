@@ -18,8 +18,8 @@ func GetAOIncrementalMetadata(connectionPool *dbconn.DBConn) map[string]toc.AOEn
 	aoTableEntries := make(map[string]toc.AOEntry)
 	for aoTableFQN := range modCounts {
 		aoTableEntries[aoTableFQN] = toc.AOEntry{
-			Modcount:         modCounts[aoTableFQN],
 			LastDDLTimestamp: lastDDLTimestamps[aoTableFQN],
+			Modcount:         modCounts[aoTableFQN],
 			RelFileNode:      relFileNodes[aoTableFQN],
 		}
 	}
@@ -257,8 +257,8 @@ func GetPAXIncrementalMetadata(connectionPool *dbconn.DBConn) map[string]toc.PAX
 	relFileNodes := getPAXRelFileNodes(connectionPool)
 	for paxTableFQN := range markers {
 		paxTableEntries[paxTableFQN] = toc.PAXEntry{
-			Marker:           markers[paxTableFQN],
 			LastDDLTimestamp: lastDDLTimestamps[paxTableFQN],
+			Marker:           markers[paxTableFQN],
 			RelFileNode:      relFileNodes[paxTableFQN],
 		}
 	}
@@ -410,10 +410,10 @@ func getPAXLastDDLTimestamps(connectionPool *dbconn.DBConn) map[string]string {
  * relfilenode is left alone by INSERT, UPDATE, DELETE, VACUUM and VACUUM FULL,
  * and changes only where the storage is genuinely replaced.
  */
-func getAORelFileNodes(connectionPool *dbconn.DBConn) map[string]string {
+func getAORelFileNodes(connectionPool *dbconn.DBConn) map[string]int64 {
 	before7Query := fmt.Sprintf(`
 		SELECT quote_ident(n.nspname) || '.' || quote_ident(c.relname) AS aotablefqn,
-			c.relfilenode::text AS relfilenode
+			c.relfilenode::int8 AS relfilenode
 		FROM pg_class c
 			JOIN pg_namespace n ON n.oid = c.relnamespace
 		WHERE c.relstorage IN ('ao', 'co')
@@ -431,7 +431,7 @@ func getAORelFileNodes(connectionPool *dbconn.DBConn) map[string]string {
 	return selectRelFileNodes(connectionPool, query)
 }
 
-func getPAXRelFileNodes(connectionPool *dbconn.DBConn) map[string]string {
+func getPAXRelFileNodes(connectionPool *dbconn.DBConn) map[string]int64 {
 	return selectRelFileNodes(connectionPool, relFileNodeQuery("'pax'"))
 }
 
@@ -443,7 +443,7 @@ func getPAXRelFileNodes(connectionPool *dbconn.DBConn) map[string]string {
 func relFileNodeQuery(amNames string) string {
 	return fmt.Sprintf(`
 		SELECT quote_ident(n.nspname) || '.' || quote_ident(c.relname) AS aotablefqn,
-			c.relfilenode::text AS relfilenode
+			c.relfilenode::int8 AS relfilenode
 		FROM pg_class c
 			JOIN pg_namespace n ON n.oid = c.relnamespace
 			JOIN pg_am a ON a.oid = c.relam
@@ -451,14 +451,14 @@ func relFileNodeQuery(amNames string) string {
 			AND %s`, amNames, relationAndSchemaFilterClause())
 }
 
-func selectRelFileNodes(connectionPool *dbconn.DBConn, query string) map[string]string {
+func selectRelFileNodes(connectionPool *dbconn.DBConn, query string) map[string]int64 {
 	var results []struct {
 		AOTableFQN  string
-		RelFileNode string
+		RelFileNode int64
 	}
 	err := connectionPool.Select(&results, query)
 	gplog.FatalOnError(err)
-	resultMap := make(map[string]string, len(results))
+	resultMap := make(map[string]int64, len(results))
 	for _, result := range results {
 		resultMap[result.AOTableFQN] = result.RelFileNode
 	}

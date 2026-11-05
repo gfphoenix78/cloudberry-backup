@@ -58,9 +58,9 @@ type IncrementalEntries struct {
 }
 
 type AOEntry struct {
-	Modcount         int64
 	LastDDLTimestamp string
-	RelFileNode      string
+	Modcount         int64
+	RelFileNode      int64
 }
 
 /*
@@ -83,10 +83,13 @@ type AOEntry struct {
  * loading, then modified, then clustered, compares equal on both fields and is
  * skipped, leaving the restore plan pointing at its pre-CLUSTER contents.
  *
- * A TOC written before this field existed has it empty, so the first
- * incremental backup after upgrading re-reads every AO and PAX table once.
- * That is the safe direction, and it is the only way to be right about a
- * backup whose storage identity was never recorded.
+ * A TOC written before this field existed has it zero.  Zero is not a value
+ * any entry here can hold: the only relations with relfilenode 0 are
+ * partitioned roots, and a root has neither a pg_appendonly entry nor a PAX
+ * aux relation, so it never reaches these maps.  Zero therefore means "not
+ * recorded", and the first incremental backup after upgrading re-reads every
+ * AO and PAX table once.  That is the safe direction, and it is the only way
+ * to be right about a backup whose storage identity was never recorded.
  */
 
 /*
@@ -98,9 +101,9 @@ type AOEntry struct {
  * which case every PAX table is treated as unknown and backed up in full.
  */
 type PAXEntry struct {
-	Marker           string
 	LastDDLTimestamp string
-	RelFileNode      string
+	Marker           string
+	RelFileNode      int64
 }
 
 type UniqueID struct {

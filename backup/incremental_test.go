@@ -61,8 +61,8 @@ var _ = Describe("backup/incremental tests", func() {
 					// exactly as they were; only the storage moved.
 					"public.ao_rewritten": {
 						Modcount:         0,
+						RelFileNode:      200,
 						LastDDLTimestamp: "00000",
-						RelFileNode:      "200",
 					},
 				},
 				PAX: map[string]toc.PAXEntry{
@@ -79,8 +79,8 @@ var _ = Describe("backup/incremental tests", func() {
 					// so the storage identity is what separates them.
 					"public.pax_rewritten": {
 						Marker:           "marker0",
+						RelFileNode:      200,
 						LastDDLTimestamp: "00000",
-						RelFileNode:      "200",
 					},
 					// A PAX table created since the previous backup has no
 					// entry at all in prevTOC, so it compares against the

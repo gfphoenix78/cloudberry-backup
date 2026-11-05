@@ -65,10 +65,10 @@ var _ = Describe("backup/queries_incremental tests", func() {
 			Expect(result).To(HaveLen(2))
 			Expect(result["public.pax_manifest"]).To(Equal(toc.PAXEntry{
 				Marker: "manifestdigest", LastDDLTimestamp: "2026-01-01 00:00:00",
-				RelFileNode: "100"}))
+				RelFileNode: 100}))
 			Expect(result["public.pax_blocks"]).To(Equal(toc.PAXEntry{
 				Marker: "blocksdigest", LastDDLTimestamp: "2026-01-02 00:00:00",
-				RelFileNode: "200"}))
+				RelFileNode: 200}))
 			Expect(mock.ExpectationsWereMet()).To(Succeed())
 		})
 
